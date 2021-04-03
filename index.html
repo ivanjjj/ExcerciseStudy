@@ -480,12 +480,12 @@ validation &lt;- validation %&gt;%
 ##                    0                    0                    0 
 ##     magnet_forearm_y     magnet_forearm_z           problem_id 
 ##                    0                    0                    0</code></pre>
-<p>We can see that there are no more columns since we removed the columns that we do not have in the final test set.</p>
+<p>We can see that there are 0 columns with NA values since we removed the columns that we do not have data for in the final validation set.</p>
 </div>
 <div id="explore-data" class="section level2">
 <h2>Explore Data</h2>
 <p>Now that we have a clean set of data, let’s split up our data as follows:</p>
-<p>training_test (originally training data) will be split 70/30 into training and test data. validaiton (originally test data) will be left seperate and we will use part of the original training set as test data instead so that we will only need to use the validation set once at the end.</p>
+<p>training_test (originally training data) will be split 70/30 into training and test data. validation (originally test data) will be left seperate and we will use part of the original training set as test data instead so that we will only need to use the validation set once at the end.</p>
 </div>
 
 

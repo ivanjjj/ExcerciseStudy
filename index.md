@@ -170,11 +170,11 @@ colSums(is.na(validation))
 ##                    0                    0                    0
 ```
 
-We can see that there are no more columns since we removed the columns that we do not have in the final test set.
+We can see that there are 0 columns with NA values since we removed the columns that we do not have data for in the final validation set.
 
 ## Explore Data
 
 Now that we have a clean set of data, let's split up our data as follows:
 
 training_test (originally training data) will be split 70/30 into training and test data.
-validaiton (originally test data) will be left seperate and we will use part of the original training set as test data instead so that we will only need to use the validation set once at the end.
+validation (originally test data) will be left seperate and we will use part of the original training set as test data instead so that we will only need to use the validation set once at the end.
