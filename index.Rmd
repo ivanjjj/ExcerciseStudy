@@ -25,6 +25,10 @@ library(dplyr)
 library(caret)
 library(lubridate)
 library(ggplot2)
+library(randomForest)
+library(e1071)
+library(GGally)
+library(psych)
 ```
 
 Now I will download the data, load it into R and clean the data for analysis. I will import the testing set as "validation" as I will split the training data further for later validation.
@@ -91,15 +95,24 @@ training_test (originally training data) will be split 70/30 into training and t
 validation (originally test data) will be left seperate and we will use part of the original training set as test data instead so that we will only need to use the validation set once at the end.
 
 ```{r split set}
+set.seed(444)
 inTrain <- createDataPartition(training_test$classe, p=0.7, list=FALSE)
 training <- training_test[inTrain,]
 test <- training_test[-inTrain,]
 ```
 
 ```{r model}
-fit_rf <- train(classe~., method="rf", data=training)
-fit_gbm <- train(classe~., method="gbm", data=training)
-fit_lda <- train(classe~., method="lda", data=training)
 
-training$cvtd_timestamp <- as.character(training$cvtd_timestamp)
+ggcorr(training, geom = "text", nbreaks = 5, palette = "RdYlBu", hjust = 1)
+
+correlated_variables <- findCorrelation(cor(training[,4:56]), cutoff = 0.6, exact = TRUE)
+
+training_2 <- training[,-(correlated_variables+4)]
+
+fit_rpart <- train(classe~., method="rpart", data=training_2)
+
+fit_gbm <- train(classe~., method="gbm", data=training_2)
+fit_lda <- train(classe~., method="lda", data=training_2)
+fit_rf <- train(classe~., method="rf", data=training_2)
+
 ```
