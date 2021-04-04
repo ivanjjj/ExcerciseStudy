@@ -24,6 +24,7 @@ First I will load necessary R libraries that I will need to complete my analysis
 library(dplyr)
 library(caret)
 library(lubridate)
+library(ggplot2)
 ```
 
 Now I will download the data, load it into R and clean the data for analysis. I will import the testing set as "validation" as I will split the training data further for later validation.
@@ -88,3 +89,17 @@ Now that we have a clean set of data, let's split up our data as follows:
 
 training_test (originally training data) will be split 70/30 into training and test data.
 validation (originally test data) will be left seperate and we will use part of the original training set as test data instead so that we will only need to use the validation set once at the end.
+
+```{r split set}
+inTrain <- createDataPartition(training_test$classe, p=0.7, list=FALSE)
+training <- training_test[inTrain,]
+test <- training_test[-inTrain,]
+```
+
+```{r model}
+fit_rf <- train(classe~., method="rf", data=training)
+fit_gbm <- train(classe~., method="gbm", data=training)
+fit_lda <- train(classe~., method="lda", data=training)
+
+training$cvtd_timestamp <- as.character(training$cvtd_timestamp)
+```
