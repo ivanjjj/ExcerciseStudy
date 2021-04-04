@@ -28,7 +28,7 @@ library(ggplot2)
 library(randomForest)
 library(e1071)
 library(GGally)
-library(psych)
+
 ```
 
 Now I will download the data, load it into R and clean the data for analysis. I will import the testing set as "validation" as I will split the training data further for later validation.
@@ -59,22 +59,17 @@ rows_with_data <- !as.vector(sapply(validation, function(x)all(is.na(x))))
 ## drop columns without data in validation set
 training_test <- training_test[,rows_with_data]
 validation <- validation[,rows_with_data]
-## convert dates to date format
-training_test$cvtd_timestamp <- dmy_hm(training_test$cvtd_timestamp)
-validation$cvtd_timestamp <- dmy_hm(validation$cvtd_timestamp)
+
+
 ## convert char col to factor
-training_test$new_window <- factor(training_test$new_window)
-validation$new_window <- factor(validation$new_window)
-training_test$new_window <- factor(training_test$new_window)
-validation$new_window <- factor(validation$new_window)
+
 training_test$classe <- factor(training_test$classe)
-training_test$user_name <- factor(training_test$user_name)
-validation$user_name <- factor(validation$user_name)
-## remove raw time stamp (drop columns)
+
+## remove unnecessary data
 training_test <- training_test %>%
-  select(-c(2,3))
+  select(-c(1:6))
 validation <- validation %>%
-  select(-c(2,3))
+  select(-c(1:6))
 
 ```
 
@@ -105,14 +100,14 @@ test <- training_test[-inTrain,]
 
 ggcorr(training, geom = "text", nbreaks = 5, palette = "RdYlBu", hjust = 1)
 
-correlated_variables <- findCorrelation(cor(training[,4:56]), cutoff = 0.6, exact = TRUE)
+correlated_variables <- findCorrelation(cor(training[,1:52]), cutoff = 0.6, exact = TRUE)
 
-training_2 <- training[,-(correlated_variables+4)]
+training <- training[,-(correlated_variables)]
 
-fit_rpart <- train(classe~., method="rpart", data=training_2)
+fit_rpart <- train(classe~., method="rpart", data=training)
 
-fit_gbm <- train(classe~., method="gbm", data=training_2)
-fit_lda <- train(classe~., method="lda", data=training_2)
-fit_rf <- train(classe~., method="rf", data=training_2)
+fit_gbm <- train(classe~., method="gbm", data=training)
+fit_lda <- train(classe~., method="lda", data=training)
+fit_rf <- train(classe~., method="rf", data=training)
 
 ```
