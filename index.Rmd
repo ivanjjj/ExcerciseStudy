@@ -5,7 +5,6 @@ date: "03/04/2021"
 output:
   html_document:
     keep_md: yes
-
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Executive Summary
 
-In this project, my goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants using devices such as Jawbone Up, Nike FuelBand, and Fitbit to quantify how well the subjects are exercising. I will be using data from here http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har
+In this project, my goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants using devices such as Jawbone Up, Nike FuelBand, and Fitbit to predict how well the subjects are exercising. I will be using data from here http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har
+
+The data on quality of exercise is in the "classe" column which has 5 levels - A, B, C, D & E, with A being "the exercise was completed correctly" and the rest being some sort of error the partipant has made during their exercise. I will be predicting the "classe" from a sample of 20 data points.
 
 ## Loading Data
 
@@ -28,7 +29,6 @@ library(ggplot2)
 library(randomForest)
 library(e1071)
 library(GGally)
-
 ```
 
 Now I will download the data, load it into R and clean the data for analysis. I will import the testing set as "validation" as I will split the training data further for later validation.
@@ -53,24 +53,18 @@ dim(training_test)
 Let's go ahead and clean up some of these variables.
 
 ```{r clean data}
-
 ## get columns with no data in validation set
 rows_with_data <- !as.vector(sapply(validation, function(x)all(is.na(x))))
 ## drop columns without data in validation set
 training_test <- training_test[,rows_with_data]
 validation <- validation[,rows_with_data]
-
-
 ## convert char col to factor
-
 training_test$classe <- factor(training_test$classe)
-
 ## remove unnecessary data
 training_test <- training_test %>%
   select(-c(1:6))
 validation <- validation %>%
   select(-c(1:6))
-
 ```
 
 Let's check for NAs now that we have cleaned up our data
@@ -93,21 +87,64 @@ validation (originally test data) will be left seperate and we will use part of 
 set.seed(444)
 inTrain <- createDataPartition(training_test$classe, p=0.7, list=FALSE)
 training <- training_test[inTrain,]
-test <- training_test[-inTrain,]
+testing <- training_test[-inTrain,]
 ```
 
-```{r model}
+Now that we have split the data into testing and training data we can start to explore the training data further. First let's remove any variables which are correlated with the findCorrelation function.
 
-ggcorr(training, geom = "text", nbreaks = 5, palette = "RdYlBu", hjust = 1)
-
+```{r remove correlated variables}
 correlated_variables <- findCorrelation(cor(training[,1:52]), cutoff = 0.6, exact = TRUE)
-
 training <- training[,-(correlated_variables)]
+```
 
-fit_rpart <- train(classe~., method="rpart", data=training)
+Now let's take a look at the remaining variable's correlation.
 
-fit_gbm <- train(classe~., method="gbm", data=training)
-fit_lda <- train(classe~., method="lda", data=training)
-fit_rf <- train(classe~., method="rf", data=training)
+```{r correl table}
+ggcorr(training[,-26], hjust = .95, size = 3, layout.exp=5)
+```
 
+We can see in the above figure that the remaining variables are not highly correlated as we have removed any variable that is correlated with another over 60%. Now that we are happy with the remaining variables, let's run some models and then test them. 
+
+## Model Data
+
+```{r cross validation}
+set.seed(444) 
+tc <- trainControl(method = "cv", number = 10)
+```
+
+```{r model, cache = TRUE}
+set.seed(444)
+fit_rpart <- train(classe~., method="rpart", data=training, trControl = tc)
+fit_rf <- train(classe~., method="rf", data=training, trControl = tc)
+```
+
+Let's take a look at the accuracy of the models that we have trained.
+
+```{r model accuracy}
+fit_rpart
+fit_rf
+fit_rf$finalModel
+```
+
+We can see that by far the random forest method has the best accuracy at 98.2%, so we will use this model to run our predictions on our testing set that we have. We can also see that the estimated out of sample error rate is 1.65% which is acceptable. Let's now test the model on our unused testing portion of the data.
+
+```{r prediction on testing set}
+rf_prediction <- predict(fit_rf, newdata = testing)
+confusionMatrix(rf_prediction, testing$classe)
+```
+
+We can see that with the testing data we can also get 98.5% accuracy. Let's use our model then to complete our final prediction on the validation data set.
+
+## Prediction
+
+```{r prediction on validation set}
+rf_prediction_final <- predict(fit_rf, newdata = validation)
+```
+
+## Conclusion
+
+Using the random forest method for predicition, we are expecting to get an out of sample error rate of 1.67%. This gives us an expected value of 0.3 incorrect predictions, so we should expect close to 20/20 of our predictions to be correct. Here are the final predictions
+
+```{r final prediction}
+rf_prediction_final
 ```
